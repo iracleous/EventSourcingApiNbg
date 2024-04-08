@@ -10,10 +10,11 @@ public class Account
     public Guid Id { get; private set; }
     public decimal Balance { get; private set; }
 
+
     // Constructor for creating new account
     public Account(Guid id, decimal initialBalance)
     {
-        ApplyChange(new AccountOpenedEvent(initialBalance));
+        ApplyChange(new AccountOpenedEvent { InitialBalance = initialBalance });
     }
 
     // Constructor for rebuilding account from events
@@ -31,7 +32,7 @@ public class Account
         if (amount <= 0)
             throw new ArgumentException("Amount must be greater than zero.", nameof(amount));
 
-        ApplyChange(new MoneyDepositedEvent(amount));
+        ApplyChange(new MoneyDepositedEvent { Amount= amount });
     }
 
     public void Withdraw(decimal amount)
@@ -42,7 +43,7 @@ public class Account
         if (Balance - amount < 0)
             throw new InvalidOperationException("Insufficient funds.");
 
-        ApplyChange(new MoneyWithdrawnEvent(amount));
+        ApplyChange(new MoneyWithdrawnEvent { Amount = amount });
     }
 
     // Apply event to update state

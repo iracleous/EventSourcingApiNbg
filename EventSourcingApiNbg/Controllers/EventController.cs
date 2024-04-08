@@ -30,7 +30,14 @@ using System.Text.Json.Serialization;
             // Read events from the specified stream starting from the beginning
             await _eventStoreClient
                 .ReadStreamAsync( Direction.Forwards, streamName, StreamPosition.Start)
-                .ForEachAsync( ev=> events.Add(DeSerializeEvent(ev.Event.Data)) );
+                .ForEachAsync( ev=>
+                {
+                    var data = ev.Event.Data;
+                    events.Add(DeSerializeEvent(data));
+                }
+                
+                
+                );
             return Ok(events);
         }
         catch (Exception ex)
@@ -70,7 +77,7 @@ using System.Text.Json.Serialization;
     private byte[] SerializeEvent(object eventData)
     {
         // Implement serialization logic here
-        return System.Text.Json.JsonSerializer.SerializeToUtf8Bytes(eventData);
+        return JsonSerializer.SerializeToUtf8Bytes(eventData);
     }
 
     // Utility method to serialize event data to JSON or any other format
