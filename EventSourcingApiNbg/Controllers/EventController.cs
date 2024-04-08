@@ -11,6 +11,10 @@ using System.Collections.Generic;
 using EventSourcingApiNbg.Models;
 using System.Text.Json;
 
+using System.Collections;
+using System.Text;
+using System.Text.Json.Serialization;
+
 [ApiController]
     [Route("api/[controller]")]
     public class EventStoreController : ControllerBase
@@ -24,12 +28,17 @@ using System.Text.Json;
 
 
 
-
-
-
     [HttpGet("read/{streamName}")]
-    public async Task<IActionResult> ReadEventsFromStream(string streamName)
+    public async Task<IActionResult> ReadEventsFromStream([FromRoute] string streamName)
     {
+        // Deserialize JSON with custom options
+        var options = new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            Converters = { new JsonStringEnumConverter() } 
+            // Optional: Include this line if you have enums in your object
+        };
+
         try
         {
             var events = new List<WeatherForecast>();
@@ -37,11 +46,13 @@ using System.Text.Json;
             await _eventStoreClient.ReadStreamAsync(
               Direction.Forwards, streamName, StreamPosition.Start)
                 .ForEachAsync(
-             ev=> {
-                 byte[] yy = ConcatenateReadOnlyMemories(  ev.Event.Data);
-                 WeatherForecast xx =JsonSerializer.Deserialize<WeatherForecast>(  yy);
-                 events.Add(xx);
-             });
+                     ev=> {
+                         ////// to be correctly deserialized
+                         var byteArray = ev.Event.Data;
+                         string decodedString = Encoding.UTF8.GetString(byteArray.ToArray());
+                         WeatherForecast vv = JsonSerializer.Deserialize<WeatherForecast>(decodedString, options);
+                          events.Add(vv);
+                     });
 
             return Ok(events);
         }
@@ -52,15 +63,16 @@ using System.Text.Json;
     }
 
     [HttpPost("write")]
-        public async Task<IActionResult> WriteEventsToStream(string streamName, [FromBody] object eventData)
+        public async Task<IActionResult> WriteEventsToStream([FromQuery] string streamName, 
+            [FromBody] object eventData)
         {
             try
             {
                 var jsonEventData = SerializeEvent(eventData); // Serialize event data to JSON or any other format
 
                 var eventToAdd = new EventData(
-                    Uuid.NewUuid(), // Generates a new UUID for the event
-                    "eventType", // Replace with your event type
+                     Uuid.NewUuid(), // Generates a new UUID for the event
+                      "eventType", // Replace with your event type
                     contentType: "application/json",
                     data: jsonEventData,
                     metadata: null // You can optionally provide metadata
