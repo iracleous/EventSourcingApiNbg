@@ -41,7 +41,7 @@ using EventSourcingApiNbg.Services;
         {
             try
             { 
-                return Ok(await _eventStoreService.WriteEventsToStream(streamName, eventData, "WeatherForecast"));
+                return Ok(await _eventStoreService.WriteEventsToStream(streamName, eventData, eventData.GetType().ToString()));
             }
             catch (Exception ex)
             {

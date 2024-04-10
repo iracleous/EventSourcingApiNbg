@@ -1,3 +1,4 @@
+using EventSourcingApiNbg.Events;
 using EventSourcingApiNbg.Models;
 using EventSourcingApiNbg.Services;
 using EventStore.Client;
@@ -15,6 +16,7 @@ var eventStoreClient = new EventStoreClient(settings);
 builder.Services.AddSingleton(eventStoreClient);
 
 builder.Services.AddScoped<IEventStoreService<WeatherForecast>, EventStoreService<WeatherForecast>>();
+builder.Services.AddScoped<IEventStoreService<EventDto>, EventStoreService<EventDto>>();
 
 var app = builder.Build();
 
